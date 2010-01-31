@@ -20,39 +20,16 @@ public class Otp {
     int seq;
     String seed, passphrase;
     byte hash[];
-    int sha;
-    final static byte MD4 = 4;
     final static byte MD5 = 5;
 
-    Otp(int n, String s, String p, int hashalg) {
+    public Otp(int n, String s, String p) {
         this.seq = n;
         this.seed = s;
         this.passphrase = p;
-        this.sha = hashalg;
     }
 
-    void calc() {
-        if (this.sha == MD5) {
-            this.md5calc();
-        }
-        else {
-            this.md4calc();
-        }
-    }
-
-    void md4calc() {
-        int tmpseq = this.seq;
-        md4 mdc;
-
-        mdc = new md4(this.seed + this.passphrase);
-        mdc.calc();
-        this.hash = otpfoldregs(mdc.getregs());
-        while (tmpseq > 0) {
-            mdc = new md4(this.hash);
-            mdc.calc();
-            this.hash = otpfoldregs(mdc.getregs());
-            tmpseq--;
-        }
+    public void calc() {
+        this.md5calc();
     }
 
     void md5calc() {
@@ -144,101 +121,6 @@ public class Otp {
      * Feel free to do whatever you like with this code. If you do modify or use
      * this code in another application, I'd be interested in hearing from you!
      */
-
-    private static class md4 extends md {
-
-        md4(String s) {
-            super(s);
-        }
-
-        md4(byte in[]) {
-            super(in);
-        }
-
-        static int F(int x, int y, int z) {
-            return ((x & y) | (~x & z));
-        }
-
-        static int G(int x, int y, int z) {
-            return ((x & y) | (x & z) | (y & z));
-        }
-
-        static int H(int x, int y, int z) {
-            return (x ^ y ^ z);
-        }
-
-        void round1(int blk) {
-            this.A = rotintlft((this.A + F(this.B, this.C, this.D) + this.d[0 + 16 * blk]), 3);
-            this.D = rotintlft((this.D + F(this.A, this.B, this.C) + this.d[1 + 16 * blk]), 7);
-            this.C = rotintlft((this.C + F(this.D, this.A, this.B) + this.d[2 + 16 * blk]), 11);
-            this.B = rotintlft((this.B + F(this.C, this.D, this.A) + this.d[3 + 16 * blk]), 19);
-
-            this.A = rotintlft((this.A + F(this.B, this.C, this.D) + this.d[4 + 16 * blk]), 3);
-            this.D = rotintlft((this.D + F(this.A, this.B, this.C) + this.d[5 + 16 * blk]), 7);
-            this.C = rotintlft((this.C + F(this.D, this.A, this.B) + this.d[6 + 16 * blk]), 11);
-            this.B = rotintlft((this.B + F(this.C, this.D, this.A) + this.d[7 + 16 * blk]), 19);
-
-            this.A = rotintlft((this.A + F(this.B, this.C, this.D) + this.d[8 + 16 * blk]), 3);
-            this.D = rotintlft((this.D + F(this.A, this.B, this.C) + this.d[9 + 16 * blk]), 7);
-            this.C = rotintlft((this.C + F(this.D, this.A, this.B) + this.d[10 + 16 * blk]), 11);
-            this.B = rotintlft((this.B + F(this.C, this.D, this.A) + this.d[11 + 16 * blk]), 19);
-
-            this.A = rotintlft((this.A + F(this.B, this.C, this.D) + this.d[12 + 16 * blk]), 3);
-            this.D = rotintlft((this.D + F(this.A, this.B, this.C) + this.d[13 + 16 * blk]), 7);
-            this.C = rotintlft((this.C + F(this.D, this.A, this.B) + this.d[14 + 16 * blk]), 11);
-            this.B = rotintlft((this.B + F(this.C, this.D, this.A) + this.d[15 + 16 * blk]), 19);
-        }
-
-        void round2(int blk) {
-            this.A = rotintlft((this.A + G(this.B, this.C, this.D) + this.d[0 + 16 * blk] + 0x5a827999), 3);
-            this.D = rotintlft((this.D + G(this.A, this.B, this.C) + this.d[4 + 16 * blk] + 0x5a827999), 5);
-            this.C = rotintlft((this.C + G(this.D, this.A, this.B) + this.d[8 + 16 * blk] + 0x5a827999), 9);
-            this.B = rotintlft((this.B + G(this.C, this.D, this.A) + this.d[12 + 16 * blk] + 0x5a827999), 13);
-
-            this.A = rotintlft((this.A + G(this.B, this.C, this.D) + this.d[1 + 16 * blk] + 0x5a827999), 3);
-            this.D = rotintlft((this.D + G(this.A, this.B, this.C) + this.d[5 + 16 * blk] + 0x5a827999), 5);
-            this.C = rotintlft((this.C + G(this.D, this.A, this.B) + this.d[9 + 16 * blk] + 0x5a827999), 9);
-            this.B = rotintlft((this.B + G(this.C, this.D, this.A) + this.d[13 + 16 * blk] + 0x5a827999), 13);
-
-            this.A = rotintlft((this.A + G(this.B, this.C, this.D) + this.d[2 + 16 * blk] + 0x5a827999), 3);
-            this.D = rotintlft((this.D + G(this.A, this.B, this.C) + this.d[6 + 16 * blk] + 0x5a827999), 5);
-            this.C = rotintlft((this.C + G(this.D, this.A, this.B) + this.d[10 + 16 * blk] + 0x5a827999), 9);
-            this.B = rotintlft((this.B + G(this.C, this.D, this.A) + this.d[14 + 16 * blk] + 0x5a827999), 13);
-
-            this.A = rotintlft((this.A + G(this.B, this.C, this.D) + this.d[3 + 16 * blk] + 0x5a827999), 3);
-            this.D = rotintlft((this.D + G(this.A, this.B, this.C) + this.d[7 + 16 * blk] + 0x5a827999), 5);
-            this.C = rotintlft((this.C + G(this.D, this.A, this.B) + this.d[11 + 16 * blk] + 0x5a827999), 9);
-            this.B = rotintlft((this.B + G(this.C, this.D, this.A) + this.d[15 + 16 * blk] + 0x5a827999), 13);
-
-        }
-
-        void round3(int blk) {
-            this.A = rotintlft((this.A + H(this.B, this.C, this.D) + this.d[0 + 16 * blk] + 0x6ed9eba1), 3);
-            this.D = rotintlft((this.D + H(this.A, this.B, this.C) + this.d[8 + 16 * blk] + 0x6ed9eba1), 9);
-            this.C = rotintlft((this.C + H(this.D, this.A, this.B) + this.d[4 + 16 * blk] + 0x6ed9eba1), 11);
-            this.B = rotintlft((this.B + H(this.C, this.D, this.A) + this.d[12 + 16 * blk] + 0x6ed9eba1), 15);
-
-            this.A = rotintlft((this.A + H(this.B, this.C, this.D) + this.d[2 + 16 * blk] + 0x6ed9eba1), 3);
-            this.D = rotintlft((this.D + H(this.A, this.B, this.C) + this.d[10 + 16 * blk] + 0x6ed9eba1), 9);
-            this.C = rotintlft((this.C + H(this.D, this.A, this.B) + this.d[6 + 16 * blk] + 0x6ed9eba1), 11);
-            this.B = rotintlft((this.B + H(this.C, this.D, this.A) + this.d[14 + 16 * blk] + 0x6ed9eba1), 15);
-
-            this.A = rotintlft((this.A + H(this.B, this.C, this.D) + this.d[1 + 16 * blk] + 0x6ed9eba1), 3);
-            this.D = rotintlft((this.D + H(this.A, this.B, this.C) + this.d[9 + 16 * blk] + 0x6ed9eba1), 9);
-            this.C = rotintlft((this.C + H(this.D, this.A, this.B) + this.d[5 + 16 * blk] + 0x6ed9eba1), 11);
-            this.B = rotintlft((this.B + H(this.C, this.D, this.A) + this.d[13 + 16 * blk] + 0x6ed9eba1), 15);
-
-            this.A = rotintlft((this.A + H(this.B, this.C, this.D) + this.d[3 + 16 * blk] + 0x6ed9eba1), 3);
-            this.D = rotintlft((this.D + H(this.A, this.B, this.C) + this.d[11 + 16 * blk] + 0x6ed9eba1), 9);
-            this.C = rotintlft((this.C + H(this.D, this.A, this.B) + this.d[7 + 16 * blk] + 0x6ed9eba1), 11);
-            this.B = rotintlft((this.B + H(this.C, this.D, this.A) + this.d[15 + 16 * blk] + 0x6ed9eba1), 15);
-
-        }
-
-        void round4(int blk) {
-            System.out.println(" must be md5, in round4!");
-        }
-    }
 
     private static class md5 extends md {
 
