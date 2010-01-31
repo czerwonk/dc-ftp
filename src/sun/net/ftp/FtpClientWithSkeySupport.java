@@ -54,9 +54,9 @@ public class FtpClientWithSkeySupport extends TransferProtocolClient {
     
     public static final int FTP_PORT = 21;
 
-    static int  FTP_SUCCESS = 1;
-    static int  FTP_TRY_AGAIN = 2;
-    static int  FTP_ERROR = 3;
+    protected static int  FTP_SUCCESS = 1;
+    protected static int  FTP_TRY_AGAIN = 2;
+    protected static int  FTP_ERROR = 3;
 
     /** remember the ftp server name because we may need it */
     private String      serverName = null;
