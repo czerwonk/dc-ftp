@@ -1,6 +1,10 @@
 package de.dan_nrw.ftp;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Proxy;
@@ -19,6 +23,7 @@ public class FtpClient extends FtpClientWithSkeySupport {
 
     private static final Pattern LIST_PATTERN = Pattern.compile("^[d\\-](?:[r\\-][w\\-][x\\-]){3}(?:\\s+[^\\s]+){4}\\s+\\w{3}\\s+\\d+\\s+\\d{2}:\\d{2}\\s+(.+)$");
     private static final Pattern SIZE_PATTERN = Pattern.compile("(?<=213\\s)\\d+(?=\\r?\\n?)");
+    
     
     /**
      * Creates a new instance of FtpClient
@@ -122,5 +127,66 @@ public class FtpClient extends FtpClientWithSkeySupport {
         }
         
         return Long.parseLong(matcher.group(0));
+    }
+    
+    /**
+     * Downloads a remote file from server
+     * @param remoteFile File to download
+     * @param targetFile Path of target file
+     * @param progressListeners Listeners observing download progress
+     * @throws IOException if download fails
+     */
+    public void downloadFile(String remoteFile, File targetFile, IFtpProgressListener... progressListeners) throws IOException {
+        this.binary();
+        long fileSize = this.getFileSize(remoteFile);
+        
+        BufferedInputStream inputStream = null;
+        BufferedOutputStream outputStream = null;
+        
+        try {
+            inputStream = new BufferedInputStream(this.get(remoteFile));
+            outputStream = new BufferedOutputStream(new FileOutputStream(targetFile));
+
+            byte[] buffer = new byte[16384];
+            int currentProgress = 0;
+            long totalBytesRead = 0;
+            int bytesRead;
+
+            while ((bytesRead = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+                
+                int newProgressRounded = (int)(100 * totalBytesRead / fileSize);
+                
+                if (newProgressRounded > currentProgress) {
+                    for (IFtpProgressListener listener : progressListeners) {
+                        listener.reportsProgress(newProgressRounded);
+                    }
+                    
+                    currentProgress = newProgressRounded;
+                }
+            }   
+        }
+        finally {
+            if (outputStream != null) {
+                try {
+                    outputStream.close();   
+                }
+                catch (IOException ex) {
+                    // exception would hide exception thrown in outer try block
+                    ex.printStackTrace(System.err);                    
+                }
+            }
+            
+            if (inputStream != null) {
+                try {
+                    inputStream.close();    
+                }
+                catch (IOException ex) {
+                    // exception would hide exception thrown in outer try block
+                    ex.printStackTrace(System.err);                    
+                }
+            }
+        }
     }
 }
