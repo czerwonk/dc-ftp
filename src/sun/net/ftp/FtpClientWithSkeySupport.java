@@ -36,15 +36,21 @@ import sun.misc.RegexpPool;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import cs.umd.edu.otp.Otp;
+
 /**
  * This class implements the FTP client.
  *
  * Modifications by Daniel Czerwonk:
- * - Renaming to FtpClientWithSkeySupport
+ * - Renamed class to FtpClientWithSkeySupport
+ * - Added s/key otp handling
  *
  * @author Jonathan Payne
  */
 public class FtpClientWithSkeySupport extends TransferProtocolClient {
+    
+    /** @author Daniel Czerwonk <d.czerwonk@googlemail.com> */
+    private static final Pattern SKEY_PATTERN = Pattern.compile("(?<=otp-md5 )[^\\s]+ [^\\s]+");
     
     public static final int FTP_PORT = 21;
 
@@ -532,10 +538,20 @@ public class FtpClientWithSkeySupport extends TransferProtocolClient {
          * Checks for "331 User name okay, need password." answer
          */
 
-        if (lastReplyCode == 331)
+        if (lastReplyCode == 331) {
+            String responseString = this.getResponseString();
+            Matcher matcher = SKEY_PATTERN.matcher(responseString);
+            
+            if (matcher.find()) {
+                // if a one time password is required (s/key)
+                String challenge = matcher.group();
+                password = this.getOneTimePassword(password, challenge);
+            }
+            
             if ((password == null) || (password.length() == 0) ||
                 (issueCommand("PASS " + password) == FTP_ERROR))
-                throw new FtpLoginException("password: " + getResponseString());
+                throw new FtpLoginException("password: " + responseString);
+        }
 
         // keep the welcome message around so we can
         // put it in the resulting HTML page.
@@ -810,4 +826,20 @@ public class FtpClientWithSkeySupport extends TransferProtocolClient {
             super.closeServer();
     }
 
+    /**
+     * Retrieves required one time password by challenge
+     * @author Daniel Czerwonk <d.czerwonk@googlemail.com>
+     * @return
+     */
+    private String getOneTimePassword(String password, String challenge) {
+        StringTokenizer st = new StringTokenizer(challenge);
+        String temp = st.nextToken();
+        int seq = (Integer.parseInt(temp));
+        String seed = st.nextToken();
+        
+        Otp otpwd = new Otp(seq, seed, password);
+        otpwd.calc();
+        
+        return otpwd.toString();
+    }    
 }
