@@ -1,6 +1,10 @@
 de.dan_nrw.ftp
 Extended version of sun.net.ftp.FtpClient (see openjdk) supporting s/key login 
 
+This library contains modifications of code originating from following sources:
+- OpenJDK (http://openjdk.java.net/)
+- jotp (http://www.cs.umd.edu/~harry/jotp/)
+
 Copyright (C) 2010, Daniel Czerwonk
 
 This program is free software; you can redistribute it and/or
