@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="release" name="dc-ftp">
+<project default="release" name="dc-ftp" xmlns:ivy="antlib:org.apache.ivy.ant">
     <property name="build.target.dir" value="release/" />
     <property name="build.output.dir" value="bin/" />
     <property name="build.src.dir" value="src/" />
     <property name="build.jar.file" value="de.dan_nrw.ftp.jar" />
 
+    <target name="init">
+        <delete dir="${build.output.dir}"/>
+        <mkdir dir="${build.output.dir}" />
+    </target>
     <target name="create_target_dir">
         <delete dir="${build.target.dir}"/>
         <mkdir dir="${build.target.dir}"/>
     </target>
-    <target name="clean_up">
-        <delete dir="${build.output.dir}"/>
-        <delete dir="${build.lib.dir}"/>
-    </target>
-    <target name="build">
-        <mkdir dir="${build.output.dir}" />
+    <target name="build" depends="init">
         <javac srcdir="${build.src.dir}" 
                destdir="${build.output.dir}" />
     </target>
-    <target name="create_signed_jar" depends="create_target_dir">
+    <target name="create_signed_jar" depends="build, create_target_dir">
         <jar destfile="${build.target.dir}/${build.jar.file}" filesetmanifest="mergewithoutmain">
             <fileset dir="${build.output.dir}"/>
             <fileset file="README" />
@@ -28,5 +27,14 @@
                  keystore="${sign.keypath}"
                  storepass="${sign.pass}" />
     </target>
-    <target name="release" depends="clean_up, build, create_target_dir, create_signed_jar, clean_up" />
+    <target name="ivy_publish" depends="create_signed_jar">
+    	<ivy:resolve />
+        <ivy:publish overwrite="true" 
+                     resolver="local"
+                     artifactspattern="${build.target.dir}/[organisation].[artifact].[ext]" />
+    </target>
+    <target name="clean_up">
+        <delete dir="${build.output.dir}"/>
+    </target>
+    <target name="release" depends="ivy_publish, clean_up" />
 </project>
